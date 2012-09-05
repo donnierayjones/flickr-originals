@@ -1,4 +1,4 @@
-# Flickr Images
+# Flickr Originals
 
 I wrote this nodejs app so that I could have a feed of my Flickr images
 in their original (i.e. large) size. I also wanted my favorites feed
