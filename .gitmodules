@@ -1,0 +1,6 @@
+[submodule "flickrnode"]
+  path = flickrnode
+  url = git@github.com:donnierayjones/flickrnode.git
+[submodule "node-atom"]
+  path = node-atom
+  url = git@github.com:donnierayjones/node-atom.git
