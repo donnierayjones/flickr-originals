@@ -21,3 +21,11 @@ Add the following config values:
 
 Or, if you're hosting elsewhere, or just want to test locally, add these
 config settings to a local config.js file (see config.example.js).
+
+# Demo
+
+  * [View My Favorites Feed][1]
+  * [View My Photos Feed][2]
+
+[1]: http://flickr.donnierayjones.com/favorites.atom
+[2]: http://flickr.donnierayjones.com/photos.atom
