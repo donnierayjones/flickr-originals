@@ -43,7 +43,7 @@ module.exports = function(callback) {
                 type: 'html'
               }},
               '<p>' + photo_info.title + ' by ' + photo_detail.owner.username + '</p>' +
-              '<p><a href="' + flickr_url + '"><img src="' + medium_url + '" /></p>'
+              '<p><a href="' + flickr_url + '"><img src="' + original_url + '" /></p>'
             ],
             date: new Date(photo_detail.dates.posted * 1000),
             updated: new Date(photo_detail.dates.lastupdate * 1000),

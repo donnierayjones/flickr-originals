@@ -43,7 +43,7 @@ module.exports = function(callback) {
                 type: 'html'
               }},
               '<p>' + photo_info.title + '</p>' +
-              '<p><a href="' + largest_size.url + '"><img src="' + medium_url.source + '" /></p>'
+              '<p><a href="' + largest_size.url + '"><img src="' + largest_size.source + '" /></p>'
             ],
             date: new Date(photo_info.date_faved * 1000),
             updated: new Date(photo_info.date_faved * 1000),
