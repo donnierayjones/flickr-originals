@@ -1,4 +1,4 @@
-module.exports = function(callback) {
+module.exports = function(person, callback) {
   var events = require('events');
   var _ = require('underscore');
   var FlickrAPI = require('flickrnode').FlickrAPI;
@@ -9,13 +9,18 @@ module.exports = function(callback) {
 
   var flickr = new FlickrAPI(config.get('FLICKR_API_KEY'));
 
+  var username = person.username;
+  var userId = person.nsid;
+  var feedUrl = config.get('SERVER_ROOT') + '/favorites/' + userId + '.atom';
+  var favoritesUrl = person.photosurl.replace('/photos', '/favorites');
+
   var feed = new ATOM({
     title: "Flickr Favorites",
-    id: 'tag:donnierayjones.com,2012:http://www.flickr.com/photos/donnieray/favorites',
-    description: "My Flickr Favorites in their original image sizes",
-    feed_url: 'http://flickr.donnierayjones.com/favorites.atom',
-    site_url: 'http://flickr.com/donnieray/favorites',
-    author: 'Donnie Ray Jones',
+    id: 'tag:' + person.username + ' Original Favorites,' + favoritesUrl,
+    description: "Flickr Favorites in their original image sizes",
+    feed_url: feedUrl,
+    site_url: favoritesUrl,
+    author: username
   });
 
   emitter.on('feed-ready', function() {
@@ -23,14 +28,14 @@ module.exports = function(callback) {
     callback(feed.xml('  '));
   });
 
-  flickr.favorites.getPublicList(config.get('FLICKR_USER_ID'), function(e, results) {
+  flickr.favorites.getPublicList(userId, function(e, results) {
     var count = results.photo.length;
     _.each(results.photo, function(photo_info) {
       flickr.photos.getSizes(photo_info.id, function(e, photo_sizes) {
         var largest_size = _.max(photo_sizes.size, function(s) {
           return parseInt(s.width, 10);
         });
-        if(parseInt(largest_size.width) > 1920)
+        if(parseInt(largest_size.width, 10) > 1920)
         {
           var medium_url = _.find(photo_sizes.size, function(s) {
             return s.label === 'Medium';

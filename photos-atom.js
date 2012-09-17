@@ -1,4 +1,4 @@
-module.exports = function(callback) {
+module.exports = function(person, callback) {
   var events = require('events');
   var _ = require('underscore');
   var FlickrAPI = require('flickrnode').FlickrAPI;
@@ -9,13 +9,17 @@ module.exports = function(callback) {
 
   var flickr = new FlickrAPI(config.get('FLICKR_API_KEY'));
 
+  var username = person.username;
+  var userId = person.nsid;
+  var feedUrl = config.get('SERVER_ROOT') + '/photos/' + userId + '.atom';
+
   var feed = new ATOM({
     title: "Flickr Photos",
-    id: 'tag:donnierayjones.com,2012:http://www.flickr.com/photos/donnieray',
-    description: "My Flickr Photos in their original image sizes",
-    feed_url: 'http://flickr.donnierayjones.com/photos.atom',
-    site_url: 'http://flickr.com/photos/donnieray',
-    author: 'Donnie Ray Jones',
+    id: 'tag:' + person.username + ' Original Photos,' + person.photosurl,
+    description: "Flickr Photos in their original image sizes",
+    feed_url: feedUrl,
+    site_url: person.photosurl,
+    author: username
   });
 
   emitter.on('feed-ready', function() {
@@ -23,8 +27,11 @@ module.exports = function(callback) {
     callback(feed.xml('  '));
   });
 
-  flickr.people.getPublicPhotos(config.get('FLICKR_USER_ID'), function(e, results) {
+  flickr.people.getPublicPhotos(userId, function(e, results) {
     var count = results.photo.length;
+    if(count === 0) {
+      emitter.emit('feed-ready');
+    }
     _.each(results.photo, function(photo_info) {
       flickr.photos.getInfo(photo_info.id, photo_info.secret, function(e, photo_detail) {
         if(photo_detail.originalsecret !== undefined)
