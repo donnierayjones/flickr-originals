@@ -30,7 +30,7 @@ app.get('/favorites/:userid.:format?', function(req, res) {
         res.send(xml);
       });
     } else {
-      var favoritesUrl = person.photosurl.replace('/photos', '/favorites');
+      var favoritesUrl = person.photosurl + 'favorites';
       res.redirect(favoritesUrl);
     }
   });

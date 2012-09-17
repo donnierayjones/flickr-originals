@@ -12,7 +12,7 @@ module.exports = function(person, callback) {
   var username = person.username;
   var userId = person.nsid;
   var feedUrl = config.get('SERVER_ROOT') + '/favorites/' + userId + '.atom';
-  var favoritesUrl = person.photosurl.replace('/photos', '/favorites');
+  var favoritesUrl = person.photosurl + 'favorites';
 
   var feed = new ATOM({
     title: "Flickr Favorites",
