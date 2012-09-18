@@ -1,5 +1,5 @@
 module.exports = {
   FLICKR_API_KEY: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
   FLICKR_USER_ID: 'XXXXXXXXXXXX',
-  FLICKR_USERNAME: 'username'
+  SERVER_ROOT: 'http://mydomain.com'
 };
