@@ -1,10 +1,12 @@
 var express = require('express');
+var morgan = require('morgan');
 var favorites = require('./favorites-atom');
 var photos = require('./photos-atom');
 var config = require('./config_provider');
 var FlickrAPI = require('flickrnode').FlickrAPI;
 
-var app = express(express.logger());
+var app = express();
+app.use(morgan());
 var flickr = new FlickrAPI(config.get('FLICKR_API_KEY'));
 
 app.get('/', function(req, res) {
