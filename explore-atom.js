@@ -15,9 +15,11 @@ module.exports = function(min_width, callback) {
   };
 
   Flickr.tokenOnly(flickrOptions, function(error, flickr) {
-    flickr.interestingness.getList({ perpage: 500, extras: ['url_o', 'url_z'] }, function(e, result) {
+    flickr.interestingness.getList({ perpage: 500, extras: ['url_o', 'url_z', 'date_upload', 'last_update'] }, function(e, result) {
       var count = result.photos.photo.length;
       _.each(result.photos.photo, function(photo_info) {
+        console.log(photo_info.date_upload);
+        console.log(photo_info.last_update);
         if(photo_info.url_o) {
           if(photo_info.width_o > min_width && (parseFloat(photo_info.width_o) / parseFloat(photo_info.height_o) >= 1.2)) {
             feed.item({
@@ -30,8 +32,8 @@ module.exports = function(min_width, callback) {
                 '<p>' + photo_info.title + '</p>' +
                 '<p><a href="' + photo_info.url_o + '"><img src="' + photo_info.url_z + '" /></p>'
               ],
-              date: new Date(),
-              updated: new Date(),
+              date: new Date(photo_info.dateupload * 1000),
+              updated: new Date(photo_info.lastupdate * 1000),
               link: {
                 _attr: {
                   rel: 'enclosure',
