@@ -6,6 +6,7 @@
     "npm": "1.0.x"
   },
   "dependencies": {
+    "atom": "git+https://github.com/donnierayjones/node-atom.git",
     "express": "",
     "flickrapi": "^0.3.36",
     "flickrnode": "git://github.com/donnierayjones/flickrnode.git",
