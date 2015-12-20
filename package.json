@@ -3,13 +3,14 @@
   "version": "0.0.1",
   "engines": {
     "node": "0.10.x",
-    "npm":  "1.0.x"
+    "npm": "1.0.x"
   },
   "dependencies": {
     "express": "",
-    "morgan": "",
-    "underscore": "1.3.3",
+    "flickrapi": "^0.3.36",
     "flickrnode": "git://github.com/donnierayjones/flickrnode.git",
-    "rss-atom": "git://github.com/donnierayjones/node-atom.git"
+    "morgan": "",
+    "rss-atom": "git://github.com/donnierayjones/node-atom.git",
+    "underscore": "1.3.3"
   }
 }

@@ -2,6 +2,7 @@ var express = require('express');
 var morgan = require('morgan');
 var favorites = require('./favorites-atom');
 var photos = require('./photos-atom');
+var explore = require('./explore-atom');
 var config = require('./config_provider');
 var FlickrAPI = require('flickrnode').FlickrAPI;
 
@@ -35,6 +36,12 @@ app.get('/favorites/:userid.:format?', function(req, res) {
       var favoritesUrl = person.photosurl + 'favorites';
       res.redirect(favoritesUrl);
     }
+  });
+});
+
+app.get('/explore/:min_width?', function(req, res) {
+  explore(req.params.min_width, function(xml) {
+    res.send(xml);
   });
 });
 
