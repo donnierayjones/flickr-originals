@@ -30,7 +30,7 @@ module.exports = function(min_width, callback) {
                   type: 'html'
                 }},
                 '<p>' + photo_info.title + '</p>' +
-                '<p><a href="' + photo_info.url_o + '"><img src="' + photo_info.url_z + '" /></p>'
+                '<p><a href="' + photo_info.url_o + '"><img src="' + photo_info.url_o + '" /></p>'
               ],
               date: new Date(photo_info.dateupload * 1000),
               updated: new Date(photo_info.lastupdate * 1000),
