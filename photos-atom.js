@@ -1,80 +1,50 @@
-module.exports = function(person, callback) {
-  var events = require('events');
-  var _ = require('underscore');
-  var FlickrAPI = require('flickrnode').FlickrAPI;
-  var ATOM = require('atom');
+module.exports = function(options, callback) {
+  var Flickr = require('flickrapi');
+  var Feed = require('feed');
   var config = require('./config_provider');
 
-  var emitter = new events.EventEmitter();
+  var person = options.person;
+  var min_width = options.min_width || 1920;
 
-  var flickr = new FlickrAPI(config.get('FLICKR_API_KEY'));
+  var flickrOptions = {
+    api_key: config.get('FLICKR_API_KEY'),
+    secret: config.get('FLICKR_API_SECRET')
+  };
 
   var username = person.username;
   var userId = person.nsid;
-  var feedUrl = config.get('SERVER_ROOT') + '/photos/' + userId + '.atom';
 
-  var feed = new ATOM({
+  var feed = new Feed({
     title: "Flickr Photos",
     id: 'tag:' + person.username + ' Original Photos,' + person.photosurl,
     description: "Flickr Photos in their original image sizes",
-    feed_url: feedUrl,
-    site_url: person.photosurl,
+    link: options.link,
     author: username
   });
 
-  emitter.on('feed-ready', function() {
-    feed.items = _.sortBy(feed.items, 'date').reverse();
-    callback(feed.xml('  '));
-  });
-
-  flickr.people.getPublicPhotos(userId, function(e, results) {
-    var count = results.photo.length;
-    if(count === 0) {
-      emitter.emit('feed-ready');
-    }
-    _.each(results.photo, function(photo_info) {
-      flickr.photos.getInfo(photo_info.id, photo_info.secret, function(e, photo_detail) {
-        if(photo_detail.originalsecret !== undefined)
-        {
-          var original_url = 'http://farm' + photo_info.farm + '.staticflickr.com/' + photo_info.server + '/' + photo_info.id + '_' + photo_detail.originalsecret + '_o.' + photo_detail.originalformat;
-          var medium_url = 'http://farm' + photo_info.farm + '.staticflickr.com/' + photo_info.server + '/' + photo_info.id + '_' + photo_detail.secret + '_z.jpg';
-          var flickr_url = 'http://www.flickr.com/photos/' + photo_detail.owner.nsid + '/' + photo_detail.id;
-          feed.item({
-            id: original_url,
-            title: photo_info.title,
-            author: [{
-              name: photo_detail.owner.realname
-            }],
-            content: [{
-              _attr: {
-                type: 'html'
-              }},
-              '<p>' + photo_info.title + ' by ' + photo_detail.owner.username + '</p>' +
-              '<p><a href="' + flickr_url + '"><img src="' + original_url + '" /></p>'
-            ],
-            date: new Date(photo_detail.dates.posted * 1000),
-            updated: new Date(photo_detail.dates.lastupdate * 1000),
-            link: {
-              _attr: {
-                rel: 'enclosure',
-                type: 'image/jpeg',
-                href: original_url
-              }
-            },
-            alternate: {
-              _attr: {
-                rel: 'alternate',
-                type: 'text/html',
-                href: flickr_url
-              }
+  Flickr.tokenOnly(flickrOptions, function(error, flickr) {
+    flickr.people.getPublicPhotos({ user_id: userId, per_page: 500, extras: ['url_o', 'url_z', 'date_upload', 'last_update'] }, function(e, result) {
+      result.photos.photo.forEach(function(photo_info) {
+        if(photo_info.url_o) {
+          var width_o = parseInt(photo_info.width_o, 10);
+          var height_o = parseInt(photo_info.height_o, 10);
+          var widthHeightRatio = parseFloat(width_o) / parseFloat(height_o);
+          if(width_o > min_width && widthHeightRatio >= 1.2 && widthHeightRatio <= 2.0) {
+            {
+              feed.addItem({
+                id: photo_info.id,
+                title: photo_info.title || 'Untitled',
+                link: photo_info.url_o,
+                content: '<p>' + photo_info.title + '</p>' +
+                    '<p><a href="' + photo_info.url_o + '"><img src="' + photo_info.url_o + '" /></p>',
+                date: new Date(photo_info.dateupload * 1000),
+                updated: new Date(photo_info.lastupdate * 1000),
+              });
             }
-          });
-        }
-        count--;
-        if(count === 0) {
-          emitter.emit('feed-ready');
+          }
         }
       });
+      callback(feed.render('rss-2.0'));
     });
   });
 };

@@ -4,43 +4,71 @@ var favorites = require('./favorites-atom');
 var photos = require('./photos-atom');
 var explore = require('./explore-atom');
 var config = require('./config_provider');
-var FlickrAPI = require('flickrnode').FlickrAPI;
+var Flickr = require('flickrapi');
+
+var flickrOptions = {
+  api_key: config.get('FLICKR_API_KEY'),
+  secret: config.get('FLICKR_API_SECRET')
+};
 
 var app = express();
 app.use(morgan());
-var flickr = new FlickrAPI(config.get('FLICKR_API_KEY'));
+
+var getUrl = function(req) {
+  return req.protocol + '://' + req.get('host') + req.originalUrl;
+};
 
 app.get('/', function(req, res) {
   res.send("flickr originals!");
 });
 
 app.get('/photos/:userid.:format?', function(req, res) {
-  flickr.people.getInfo(req.params.userid, function(e, person) {
-    if(req.params.format == 'atom') {
-      photos(person, function(xml) {
-        res.send(xml);
-      });
-    } else {
-      res.redirect(person.photosurl);
-    }
+  Flickr.tokenOnly(flickrOptions, function(error, flickr) {
+    flickr.people.getInfo({ user_id: req.params.userid }, function(e, result) {
+      console.log('e', e);
+      console.log('result', result);
+      if(req.params.format == 'atom') {
+        var options = {
+          link: getUrl(req),
+          min_width: req.query.min_width,
+          person: result.person
+        };
+        photos(options, function(xml) {
+          res.send(xml);
+        });
+      } else {
+        res.redirect(result.person.photosurl);
+      }
+    });
   });
 });
 
 app.get('/favorites/:userid.:format?', function(req, res) {
-  flickr.people.getInfo(req.params.userid, function(e, person) {
-    if(req.params.format == 'atom') {
-      favorites(person, function(xml) {
-        res.send(xml);
-      });
-    } else {
-      var favoritesUrl = person.photosurl + 'favorites';
-      res.redirect(favoritesUrl);
-    }
+  Flickr.tokenOnly(flickrOptions, function(error, flickr) {
+    flickr.people.getInfo({ user_id: req.params.userid }, function(e, result) {
+      if(req.params.format == 'atom') {
+        var options = {
+          link: getUrl(req),
+          min_width: req.query.min_width,
+          person: result.person
+        };
+        favorites(options, function(xml) {
+          res.send(xml);
+        });
+      } else {
+        var favoritesUrl = result.person.photosurl + 'favorites';
+        res.redirect(favoritesUrl);
+      }
+    });
   });
 });
 
-app.get('/explore/:min_width?', function(req, res) {
-  explore(req.params.min_width, function(xml) {
+app.get('/explore', function(req, res) {
+  var options = {
+    link: getUrl(req),
+    min_width: req.query.min_width
+  };
+  explore(options, function(xml) {
     res.send(xml);
   });
 });

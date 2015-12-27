@@ -1,78 +1,52 @@
-module.exports = function(person, callback) {
-  var events = require('events');
-  var _ = require('underscore');
-  var FlickrAPI = require('flickrnode').FlickrAPI;
-  var ATOM = require('atom');
+module.exports = function(options, callback) {
+  var Flickr = require('flickrapi');
+  var Feed = require('feed');
   var config = require('./config_provider');
 
-  var emitter = new events.EventEmitter();
+  var person = options.person;
+  var min_width = options.min_width || 1920;
 
-  var flickr = new FlickrAPI(config.get('FLICKR_API_KEY'));
+  var flickrOptions = {
+    api_key: config.get('FLICKR_API_KEY'),
+    secret: config.get('FLICKR_API_SECRET')
+  };
 
   var username = person.username;
   var userId = person.nsid;
   var feedUrl = config.get('SERVER_ROOT') + '/favorites/' + userId + '.atom';
   var favoritesUrl = person.photosurl + 'favorites';
 
-  var feed = new ATOM({
+  var feed = new Feed({
     title: "Flickr Favorites",
     id: 'tag:' + person.username + ' Original Favorites,' + favoritesUrl,
+    link: options.link,
     description: "Flickr Favorites in their original image sizes",
-    feed_url: feedUrl,
-    site_url: favoritesUrl,
     author: username
   });
 
-  emitter.on('feed-ready', function() {
-    feed.items = _.sortBy(feed.items, 'date').reverse();
-    callback(feed.xml('  '));
-  });
-
-  flickr.favorites.getPublicList(userId, function(e, results) {
-    var count = results.photo.length;
-    _.each(results.photo, function(photo_info) {
-      flickr.photos.getSizes(photo_info.id, function(e, photo_sizes) {
-        var largest_size = _.max(photo_sizes.size, function(s) {
-          return parseInt(s.width, 10);
-        });
-        if(parseInt(largest_size.width, 10) > 1920)
-        {
-          var medium_url = _.find(photo_sizes.size, function(s) {
-            return s.label === 'Medium';
-          });
-          feed.item({
-            id: largest_size.source,
-            title: photo_info.title,
-            content: [{
-              _attr: {
-                type: 'html'
-              }},
-              '<p>' + photo_info.title + '</p>' +
-              '<p><a href="' + largest_size.url + '"><img src="' + largest_size.source + '" /></p>'
-            ],
-            date: new Date(photo_info.date_faved * 1000),
-            updated: new Date(photo_info.date_faved * 1000),
-            link: {
-              _attr: {
-                rel: 'enclosure',
-                type: 'image/jpeg',
-                href: largest_size.source
-              }
-            },
-            alternate: {
-              _attr: {
-                rel: 'alternate',
-                type: 'text/html',
-                href: largest_size.url
-              }
+  Flickr.tokenOnly(flickrOptions, function(error, flickr) {
+    flickr.favorites.getPublicList({ user_id: userId, per_page: 500, extras: ['url_o', 'url_z', 'date_upload', 'last_update'] }, function(e, result) {
+      result.photos.photo.forEach(function(photo_info) {
+        if(photo_info.url_o) {
+          var width_o = parseInt(photo_info.width_o, 10);
+          var height_o = parseInt(photo_info.height_o, 10);
+          var widthHeightRatio = parseFloat(width_o) / parseFloat(height_o);
+          if(width_o > min_width && widthHeightRatio >= 1.2 && widthHeightRatio <= 2.0) {
+            {
+              feed.addItem({
+                id: photo_info.id,
+                title: photo_info.title || 'Untitled',
+                link: photo_info.url_o,
+                content: '<p>' + photo_info.title + '</p>' +
+                    '<p><a href="' + photo_info.url_o + '"><img src="' + photo_info.url_o + '" /></p>',
+                date: new Date(photo_info.date_faved * 1000),
+                updated: new Date(photo_info.lastupdate * 1000),
+              });
             }
-          });
-        }
-        count--;
-        if(count === 0) {
-          emitter.emit('feed-ready');
+          }
         }
       });
+      callback(feed.render('rss-2.0'));
     });
   });
 };
